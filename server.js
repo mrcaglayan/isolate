@@ -393,15 +393,7 @@ app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Catch-all route to handle any other requests
-app.get('*', (req, res) => {
-    const filePath = path.join(__dirname, 'public', req.path);
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send('File not found');
-    }
-});
+
 
 // Serve the data.json file
 app.get('/data.json', (req, res) => {
@@ -424,7 +416,15 @@ app.get('/api/example', (req, res) => {
     }
 });
 
-
+// Catch-all route to handle any other requests
+app.get('*', (req, res) => {
+    const filePath = path.join(__dirname, 'public', req.path);
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send('File not found');
+    }
+});
 
 // Serve the favicon.ico file
 // app.get('/favicon.ico', (req, res) => {

@@ -177,10 +177,24 @@ app.delete('/api/schools/:index', (req, res) => {
 });
 
 app.post('/api/students', (req, res) => {
-    const student = req.body;
-    data.students.push(student); // Add student to data.json
-    saveData();
-    res.status(201).json(student);
+    try {
+        const student = req.body;
+        console.log('Received student:', student); // Debugging log
+
+        // Validate the student object
+        if (!student || typeof student !== 'object') {
+            console.error('Invalid student:', student);
+            return res.status(400).json({ error: 'Invalid student' });
+        }
+
+        data.students.push(student); // Add student to data.json
+        saveData();
+        res.status(201).json(student);
+    } catch (error) {
+        console.error('Error in /api/students:', error);
+        console.error('Stack trace:', error.stack); // Log the stack trace
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 app.get('/api/students', (req, res) => {
@@ -396,14 +410,7 @@ app.get('/data.json', (req, res) => {
     }
 });
 
-app.get('/api/example', (req, res) => {
-    try {
-        throw new Error('Simulated error');
-    } catch (error) {
-        console.error('Error in /api/example:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+
 
 app.get('*', (req, res) => {
     const filePath = path.join(__dirname, 'public', req.path);

@@ -386,6 +386,8 @@ app.get('/login.html', (req, res) => {
 });
 
 app.get('/data.json', (req, res) => {
+    const dataFilePath = path.join(__dirname, 'data.json');
+    console.log(`Attempting to serve file: ${dataFilePath}`); // Debugging log
     if (fs.existsSync(dataFilePath)) {
         res.sendFile(dataFilePath);
     } else {

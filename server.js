@@ -14,8 +14,11 @@ const __dirname = path.dirname(__filename);
 
 app.use(bodyParser.json());
 app.use(cors());
-// Serve static files from the 'public' directory
-app.use(express.static('public'));
+
+// Serve static files from the 'public', 'styles', and 'src' directories
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/styles', express.static(path.join(__dirname, 'styles')));
+app.use('/src', express.static(path.join(__dirname, 'src')));
 
 const dataFilePath = path.join(process.cwd(), 'data.json');
 let data = {
@@ -368,10 +371,7 @@ app.put('/api/updateindexesforinformationpass', (req, res) => {
 });
 
 
-// Serve static files from the 'public', 'styles', and 'src' directories
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/styles', express.static(path.join(__dirname, 'styles')));
-app.use('/src', express.static(path.join(__dirname, 'src')));
+
 
 // Define routes for specific HTML files if needed
 app.get('/', (req, res) => {
@@ -394,7 +394,22 @@ app.get('*', (req, res) => {
 
 // Serve the data.json file
 app.get('/data.json', (req, res) => {
-    res.sendFile(dataFilePath);
+    if (fs.existsSync(dataFilePath)) {
+        res.sendFile(dataFilePath);
+    } else {
+        res.status(404).send('data.json file not found');
+    }
+});
+
+// Example API endpoint to demonstrate error handling
+app.get('/api/example', (req, res) => {
+    try {
+        // Simulate an error
+        throw new Error('Simulated error');
+    } catch (error) {
+        console.error('Error in /api/example:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 

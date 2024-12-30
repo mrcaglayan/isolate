@@ -26,9 +26,9 @@ let data = {
     tables: {},
     schools: [],
     students: [],
-    completeentrydb: [],
-    allDiscountOptions: [],
-    indexesforinformationpass: []
+    completeentrydb: [], // Add completeentrydb array
+    allDiscountOptions: [], // Add allDiscountOptions array
+    indexesforinformationpass: [] // Add indexesforinformationpass array
 };
 
 // Load data from JSON file
@@ -36,8 +36,6 @@ function loadData() {
     if (fs.existsSync(dataFilePath)) {
         const fileData = fs.readFileSync(dataFilePath);
         data = JSON.parse(fileData);
-    } else {
-        console.error('data.json file does not exist');
     }
 }
 
@@ -46,38 +44,36 @@ function saveData() {
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
 }
 
+
 loadData();
 
 app.get('/api/completeentrydb', (req, res) => {
-    try {
-        const { studenttezkereNo, schoolName } = req.query;
-        let filteredStudents = data.completeentrydb;
+    const studenttezkereNo = req.query.studenttezkereNo;
+    const schoolName = req.query.schoolName;
 
-        if (studenttezkereNo) {
-            filteredStudents = filteredStudents.filter(student => student["Student Tezkere No"] === studenttezkereNo);
-        }
-
-        if (schoolName) {
-            filteredStudents = filteredStudents.filter(student => student.name === schoolName);
-        }
-
-        console.log('Filtered students:', filteredStudents);
-        res.json(filteredStudents);
-    } catch (error) {
-        console.error('Error in /api/completeentrydb:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-app.get('/api/completeentrydb-ID', (req, res) => {
-    const { studenttezkereNo } = req.query;
     let filteredStudents = data.completeentrydb;
 
     if (studenttezkereNo) {
         filteredStudents = filteredStudents.filter(student => student["Student Tezkere No"] === studenttezkereNo);
     }
 
-    console.log('Filtered students2:', filteredStudents);
+    if (schoolName) {
+        filteredStudents = filteredStudents.filter(student => student.name === schoolName);
+    }
+
+    console.log('Filtered students:', filteredStudents); // Debugging log
+    res.json(filteredStudents);
+});
+
+app.get('/api/completeentrydb-ID', (req, res) => {
+    const studenttezkereNo = req.query.studenttezkereNo;
+    let filteredStudents = data.completeentrydb;
+
+    if (studenttezkereNo) {
+        filteredStudents = filteredStudents.filter(student => student["Student Tezkere No"] === studenttezkereNo);
+    }
+
+    console.log('Filtered students2:', filteredStudents); // Debugging log
     res.json(filteredStudents);
 });
 
@@ -90,16 +86,19 @@ app.get('/api/allDiscountOptions', (req, res) => {
 });
 
 app.post('/api/allDiscountOptions', (req, res) => {
-    console.log('Received request to save discount:', req.body);
+    console.log('Received request to save discount:', req.body); // Debugging log
     req.body.forEach(discount => {
         const { option, discountRate } = discount;
+        // Check if the option already exists
         const existingOption = data.allDiscountOptions.find(item => item.option === option);
         if (existingOption) {
+            // Update the discount rate if the option exists
             existingOption.discountRate = discountRate;
-            console.log('Updated discount:', { option, discountRate });
+            console.log('Updated discount:', { option, discountRate }); // Debugging log
         } else {
+            // Add the new option with its discount rate
             data.allDiscountOptions.push({ option, discountRate });
-            console.log('Saved discount:', { option, discountRate });
+            console.log('Saved discount:', { option, discountRate }); // Debugging log
         }
     });
     saveData();
@@ -135,14 +134,16 @@ app.post('/api/schools', (req, res) => {
     res.status(201).json(school);
 });
 
+// Endpoint to get all tables
 app.get('/api/tables', (req, res) => {
-    console.log('Received request for all tables');
+    console.log('Received request for all tables'); // Debugging log
+    // Reload data from JSON file to ensure it's up-to-date
     loadData();
-    console.log('Current tables data:', JSON.stringify(data.tables, null, 2));
+    console.log('Current tables data:', JSON.stringify(data.tables, null, 2)); // Log the current tables data
     if (Object.keys(data.tables).length > 0) {
         res.json(data.tables);
     } else {
-        console.log('No tables found');
+        console.log('No tables found'); // Debugging log
         res.status(404).json({ error: 'No tables found' });
     }
 });
@@ -153,7 +154,7 @@ app.get('/api/schools', (req, res) => {
 
 app.put('/api/schools/:index', (req, res) => {
     const index = parseInt(req.params.index, 10);
-    console.log(`PUT request for index: ${index}`);
+    console.log(`PUT request for index: ${index}`); // Log the index
     if (index >= 0 && index < data.schools.length) {
         data.schools[index] = req.body;
         saveData();
@@ -165,7 +166,7 @@ app.put('/api/schools/:index', (req, res) => {
 
 app.delete('/api/schools/:index', (req, res) => {
     const index = parseInt(req.params.index, 10);
-    console.log(`DELETE request for index: ${index}`);
+    console.log(`DELETE request for index: ${index}`); // Log the index
     if (index >= 0 && index < data.schools.length) {
         const school = data.schools.splice(index, 1)[0];
         saveData();
@@ -176,26 +177,11 @@ app.delete('/api/schools/:index', (req, res) => {
 });
 
 app.post('/api/students', (req, res) => {
-    try {
-        const student = req.body;
-        console.log('Received student:', student); // Debugging log
-
-        // Validate the student object
-        if (!student || typeof student !== 'object') {
-            console.error('Invalid student:', student);
-            return res.status(400).json({ error: 'Invalid student' });
-        }
-
-        data.students.push(student); // Add student to data.json
-        saveData();
-        res.status(201).json(student);
-    } catch (error) {
-        console.error('Error in /api/students:', error);
-        console.error('Stack trace:', error.stack); // Log the stack trace
-        res.status(500).send('Internal Server Error');
-    }
+    const student = req.body;
+    data.students.push(student); // Add student to data.json
+    saveData();
+    res.status(201).json(student);
 });
-
 
 app.get('/api/students', (req, res) => {
     const username = req.query.username;
@@ -230,29 +216,16 @@ app.delete('/api/students/:id', (req, res) => {
     }
 });
 
+// New endpoint to save complete entry
 app.post('/api/completeentrydb', (req, res) => {
-    try {
-        const completeEntry = req.body;
-        console.log('Received complete entry:', completeEntry); // Debugging log
-
-        // Validate the completeEntry object
-        if (!completeEntry || typeof completeEntry !== 'object') {
-            console.error('Invalid complete entry:', completeEntry);
-            return res.status(400).json({ error: 'Invalid complete entry' });
-        }
-
-        data.completeentrydb.push(completeEntry);
-        saveData();
-        res.status(201).json(completeEntry);
-    } catch (error) {
-        console.error('Error in /api/completeentrydb:', error);
-        console.error('Stack trace:', error.stack); // Log the stack trace
-        res.status(500).send('Internal Server Error');
-    }
+    const completeEntry = req.body;
+    data.completeentrydb.push(completeEntry);
+    saveData();
+    res.status(201).json(completeEntry);
 });
 
 app.put('/api/completeentrydb/:id', (req, res) => {
-    const entryId = parseInt(req.params.id, 10);
+    const entryId = parseInt(req.params.id, 10); // Convert entryId to a number
     const entryIndex = data.completeentrydb.findIndex(entry => entry.id === entryId);
     if (entryIndex !== -1) {
         data.completeentrydb[entryIndex] = { ...data.completeentrydb[entryIndex], ...req.body };
@@ -263,8 +236,20 @@ app.put('/api/completeentrydb/:id', (req, res) => {
     }
 });
 
+app.put('/api/completeentrydb/:index', (req, res) => {
+    const index = parseInt(req.params.index, 10);
+    if (index >= 0 && index < data.completeentrydb.length) {
+        data.completeentrydb[index] = req.body;
+        saveData();
+        res.json(data.completeentrydb[index]);
+    } else {
+        res.status(404).json({ error: 'Complete entry not found' });
+    }
+});
+
+// New endpoint to delete complete entry
 app.delete('/api/completeentrydb/:id', (req, res) => {
-    const entryId = parseInt(req.params.id, 10);
+    const entryId = parseInt(req.params.id, 10); // Convert entryId to a number
     const entryIndex = data.completeentrydb.findIndex(entry => entry.id === entryId);
     if (entryIndex !== -1) {
         const entry = data.completeentrydb.splice(entryIndex, 1)[0];
@@ -275,15 +260,38 @@ app.delete('/api/completeentrydb/:id', (req, res) => {
     }
 });
 
+// Endpoint to get completeentrydb data
+app.get('/api/completeentrydb', (req, res) => {
+    if (data.completeentrydb) {
+        res.json(data.completeentrydb);
+    } else {
+        res.status(404).json({ error: 'Data not found' });
+    }
+});
+
+// Endpoint to get allDiscountOptions data
+// Endpoint to get allDiscountOptions data
+app.get('/api/allDiscountOptions', (req, res) => {
+    if (data.allDiscountOptions) {
+        res.json(data.allDiscountOptions);
+    } else {
+        res.status(404).json({ error: 'Data not found' });
+    }
+});
+
 app.post('/save-tables', (req, res) => {
     const newTables = req.body;
-    fs.readFile(dataFilePath, 'utf8', (err, fileData) => {
+    // Read the existing data.json file
+    fs.readFile(path.join(__dirname, 'data.json'), 'utf8', (err, data) => {
         if (err) {
             return res.status(500).send('Error reading data');
         }
-        let jsonData = JSON.parse(fileData);
+        // Parse the existing data
+        let jsonData = JSON.parse(data);
+        // Update the tables object
         jsonData.tables = newTables;
-        fs.writeFile(dataFilePath, JSON.stringify(jsonData, null, 2), (err) => {
+        // Write the updated data back to data.json
+        fs.writeFile(path.join(__dirname, 'data.json'), JSON.stringify(jsonData, null, 2), (err) => {
             if (err) {
                 return res.status(500).send('Error saving data');
             }
@@ -293,31 +301,36 @@ app.post('/save-tables', (req, res) => {
 });
 
 app.get('/fetch-tables', (req, res) => {
-    fs.readFile(dataFilePath, 'utf8', (err, fileData) => {
+    fs.readFile(path.join(__dirname, 'data.json'), 'utf8', (err, data) => {
         if (err) {
             return res.status(500).send('Error reading data');
         }
-        const jsonData = JSON.parse(fileData);
+        const jsonData = JSON.parse(data);
         res.json({ tables: jsonData.tables });
     });
 });
 
+// Endpoint to handle POST request
 app.post('/api/indexesforinformationpass', (req, res) => {
     const { indexRange } = req.body;
     console.log('Received index range:', indexRange);
 
+    // Ensure indexesforinformationpass array exists
     if (!Array.isArray(data.indexesforinformationpass)) {
         console.error('indexesforinformationpass is not an array');
         data.indexesforinformationpass = [];
     }
 
+    // Check if data already exists
     if (data.indexesforinformationpass.length > 0) {
         console.log('Data already exists. No need to add more.');
         return res.status(400).json({ error: 'Data already exists. No need to add more.' });
     }
 
+    // Update indexesforinformationpass array
     data.indexesforinformationpass.push(indexRange);
 
+    // Save updated data
     try {
         saveData();
     } catch (error) {
@@ -328,21 +341,25 @@ app.post('/api/indexesforinformationpass', (req, res) => {
     res.json({ message: 'Index range received', indexRange });
 });
 
+// Endpoint to handle PUT request for updating index range
 app.put('/api/updateindexesforinformationpass', (req, res) => {
     const { indexRange } = req.body;
     console.log('Received index range for update:', indexRange);
 
+    // Ensure indexesforinformationpass array exists
     if (!Array.isArray(data.indexesforinformationpass)) {
         console.error('indexesforinformationpass is not an array');
         data.indexesforinformationpass = [];
     }
 
+    // Update the first entry in indexesforinformationpass array
     if (data.indexesforinformationpass.length > 0) {
         data.indexesforinformationpass[0] = indexRange;
     } else {
         data.indexesforinformationpass.push(indexRange);
     }
 
+    // Save updated data
     try {
         saveData();
     } catch (error) {
@@ -352,6 +369,13 @@ app.put('/api/updateindexesforinformationpass', (req, res) => {
 
     res.json({ message: 'Index range updated', indexRange });
 });
+
+
+// Serve the favicon.ico file
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'favicon.ico'));
+});
+
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -387,7 +411,6 @@ app.get('*', (req, res) => {
         res.status(404).send('File not found');
     }
 });
-
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });

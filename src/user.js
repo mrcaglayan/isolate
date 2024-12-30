@@ -35,43 +35,20 @@ function gatherEntryData() {
     return entryData;
 }
 function saveData(endpoint, data, username, selectedYear) {
-    fetch('/data.json')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        return response.json();
+    fetch(`/api/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
     })
-    .then(existingData => {
-        console.log('Fetched existing data:', existingData); // Log the fetched data
-        if (!Array.isArray(existingData.students)) {
-            throw new Error('Expected existingData.students to be an array');
+    .then(response => handleResponse(response))
+    .then(data => {
+        console.log(`${endpoint} added:`, data);
+        if (endpoint === 'students') {
+            fetchStudents(username, selectedYear);
+            fetchTableStructure(selectedYear);
         }
-        const studentExists = existingData.students.some(student => student['Student Tezkere No'] === data['Student Tezkere No'] && student.selectedYear === selectedYear);
-        console.log('Student exists:', studentExists); // Log if the student exists
-        if (studentExists) {
-            alert('This person is already in the system');
-            return;
-        }
-        fetch(`http://localhost:3000/api/${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => handleResponse(response))
-        .then(data => {
-            console.log(`${endpoint} added:`, data);
-            if (endpoint === 'students') {
-                fetchStudents(username, selectedYear);
-                fetchTableStructure(selectedYear);
-            }
-        })
-        .catch(error => handleError(`Error adding ${endpoint}:`, error));
     })
-    .catch(error => {
-        console.error('Error checking existing data:', error);
-        handleError('Error checking existing data:', error);
-    });
+    .catch(error => handleError(`Error adding ${endpoint}:`, error));
 }
 function handleResponse(response) {
     if (!response.ok) {
@@ -81,12 +58,13 @@ function handleResponse(response) {
     }
     return response.json();
 }
+
 function handleError(message, error) {
     console.error(message, error);
-    alert(message);
+    alert(`${message}: ${error.message}`);
 }
 function fetchTableStructure(year) {
-    fetch(`http://localhost:3000/api/tables?year=${year}`)
+    fetch(`/api/tables?year=${year}`)
     .then(response => handleResponse(response))
     .then(data => {
         const tableStructure = data[year];
@@ -222,7 +200,7 @@ function filterEntries() {
     });
 }
 function fetchStudents(username, selectedYear) {
-    fetch(`http://localhost:3000/api/students?username=${encodeURIComponent(username)}&year=${encodeURIComponent(selectedYear)}`)
+    fetch(`/api/students?username=${encodeURIComponent(username)}&year=${encodeURIComponent(selectedYear)}`)
     .then(response => handleResponse(response))
     .then(data => {
         const studentList = document.querySelector('#student-list');
@@ -268,7 +246,7 @@ function deleteStudent(studentId, username, selectedYear) {
 }
 
 function deleteData(endpoint, id, username, selectedYear) {
-    fetch(`http://localhost:3000/api/${endpoint}/${id}`, { method: 'DELETE' })
+    fetch(`/api/${endpoint}/${id}`, { method: 'DELETE' })
     .then(response => handleResponse(response))
     .then(data => {
         console.log(`${endpoint} deleted:`, data);
@@ -319,7 +297,7 @@ function editStudent(student, row) {
 }
 
 function saveEditedData(studentId, updatedStudentData) {
-    fetch(`http://localhost:3000/api/students/${studentId}`, {
+    fetch(`/api/students/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedStudentData)
@@ -330,7 +308,7 @@ function saveEditedData(studentId, updatedStudentData) {
 }
 
 function saveEditedDatacompleteentrydb(studentId, updatedStudentData) {
-    fetch(`http://localhost:3000/api/completeentrydb/${studentId}`, {
+    fetch(`/api/completeentrydb/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedStudentData)
@@ -473,7 +451,7 @@ document.getElementById('search-button').addEventListener('click', () => {
             previousApplyButton.remove();
         }
 
-        let url = `http://localhost:3000/api/completeentrydb?studenttezkereNo=${encodeURIComponent(studenttezkereNo)}`;
+        let url = `/api/completeentrydb?studenttezkereNo=${encodeURIComponent(studenttezkereNo)}`;
         if (currentAction === 'renew') {
             url += `&schoolName=${encodeURIComponent(schoolName)}`;
         }
@@ -567,7 +545,8 @@ applyButton.addEventListener('click', () => {
 
     const closeButton = document.querySelector('.close-button');
     closeButton.addEventListener('click', () => {
-        closeModal('entry-modal');
+        const modal = document.getElementById('entry-modal');
+        modal.style.display = 'none';
     });
 
     window.addEventListener('click', (event) => {
@@ -581,19 +560,20 @@ applyButton.addEventListener('click', () => {
         event.preventDefault();
         const rawInstallments = gatherInstallmentData();
         addEntry(username, rawInstallments, selectedYear);
-        closeModal('entry-modal');
     });
 
     document.getElementById('add-entry').addEventListener('click', () => {
         const rawInstallments = gatherInstallmentData();
         addEntry(username, rawInstallments, selectedYear);
+        closeModal('entry-modal'); // Ensure the modal is closed after adding the entry
+
     });
 
     document.getElementById('preview-entry').addEventListener('click', previewEntry);
     document.getElementById('back-button').addEventListener('click', () => window.location.href = 'index.html');
 
     function fetchSchoolData(school) {
-        fetch('http://localhost:3000/api/schools')
+        fetch('/api/schools')
         .then(response => handleResponse(response))
         .then(data => {
             schoolData = data.find(s => s.name === school);

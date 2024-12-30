@@ -1,8 +1,8 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 const app = express();
 const port = 3000;
 
@@ -11,7 +11,7 @@ app.use(cors());
 // Serve static files from the 'public' directory
 app.use(express.static('public'));
 
-const dataFilePath = path.join(__dirname, 'data.json');
+const dataFilePath = path.join(process.cwd(), 'data.json');
 let data = {
     users: [],
     tables: {},
@@ -367,8 +367,13 @@ app.use('/styles', express.static('styles'));
 app.use(express.static('public'));
 app.use('/data.json', express.static('data.json'));
 
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 
@@ -397,7 +402,7 @@ app.get('/', (req, res) => {
 // });
 // app.get('/data.json', (req, res) => {
 //     res.sendFile(path.join(__dirname, 'data.json'));
-//test
+
 // });
 // app.get('/*', (req, res) => {
 //     const filePath = path.join(__dirname, 'public', req.params[0])+'.html';

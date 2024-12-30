@@ -229,10 +229,23 @@ app.delete('/api/students/:id', (req, res) => {
 
 // New endpoint to save complete entry
 app.post('/api/completeentrydb', (req, res) => {
-    const completeEntry = req.body;
-    data.completeentrydb.push(completeEntry);
-    saveData();
-    res.status(201).json(completeEntry);
+    try {
+        const completeEntry = req.body;
+        console.log('Received complete entry:', completeEntry); // Debugging log
+
+        // Validate the completeEntry object
+        if (!completeEntry || typeof completeEntry !== 'object') {
+            console.error('Invalid complete entry:', completeEntry);
+            return res.status(400).json({ error: 'Invalid complete entry' });
+        }
+
+        data.completeentrydb.push(completeEntry);
+        saveData();
+        res.status(201).json(completeEntry);
+    } catch (error) {
+        console.error('Error in /api/completeentrydb:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 app.put('/api/completeentrydb/:id', (req, res) => {

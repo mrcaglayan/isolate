@@ -13,18 +13,99 @@ export function closeModal() {
 export function generateUniqueId() {
     return Date.now();
 }
-export function addEntry(username, rawInstallments, selectedYear) {
-    const entryData = gatherEntryData();
+export function addEntry(username, selectedYear) {
+    const entryData = {};
+    const inputs = document.querySelectorAll('#table-container input, #table-container select');
+    inputs.forEach(input => {
+        const key = input.id.replace('entry-', '');
+        entryData[key] = input.value.trim();
+    });
     if (Object.values(entryData).some(value => value === '')) {
         alert('Please fill in all fields');
         return;
     }
+    console.log('Entry data:', entryData); // Debugging log
+
+    // Generate and store the unique ID
     const uniqueId = generateUniqueId();
-    const registrationType = currentAction === 'renew' ? 'Renewed Registration' : currentAction === 'transfer' ? 'Transfer Registration' : 'New Registration';
-    const studentData = { ...entryData, username, selectedYear, id: uniqueId, Instalments: rawInstallments, RegistrationType: registrationType };
-    const completeEntry = { ...entryData, ...schoolBasedOnYearAndSchoolName, username, id: uniqueId, Instalments: rawInstallments, RegistrationType: registrationType };
-    saveData('students', studentData, username, selectedYear);
-    saveData('completeentrydb', completeEntry);
+    const completeEntry = { ...entryData, ...schoolBasedOnYearAndSchoolName, username, selectedYear, id: uniqueId };
+    console.log('Complete entry:', completeEntry); // Debugging log
+
+    // Assign the unique ID to rawInstallmentsData
+    sharedData.rawInstallmentsData = sharedData.rawInstallmentsData.map(installment => ({
+        ...installment,
+        id: uniqueId
+    }));
+    console.log('Updated rawInstallmentsData with uniqueId:', sharedData.rawInstallmentsData); // Debug log
+
+    // Save the student entry
+    fetch('/api/students', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ...entryData, username, selectedYear, id: uniqueId }) // Include username and unique ID in the student-specific information
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Student added:', data);
+        fetchStudents(username, selectedYear); // Fetch and display the updated list of students
+        fetchTableStructure(selectedYear); // Re-fetch the table structure
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add student');
+    });
+
+    // Save the complete entry
+    fetch('/api/completeentrydb', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(completeEntry)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Complete entry added:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to add complete entry');
+    });
+
+    // Send rawInstallments data to the server
+    console.log('Sending rawInstallmentsData to server:', sharedData.rawInstallmentsData); // Debug log
+    fetch('/api/rawInstallmentsdatas', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(sharedData.rawInstallmentsData) // Send the stored rawInstallments data
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Raw installments data saved:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save raw installments data');
+    });
 }
 function gatherEntryData() {
     const entryData = {};

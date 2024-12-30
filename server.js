@@ -3,8 +3,14 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
 const app = express();
 const port = 3000;
+
+// Define __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -362,8 +368,10 @@ app.put('/api/updateindexesforinformationpass', (req, res) => {
 });
 
 
-// Serve static files from the 'public' directory
-app.use(express.static('public'));
+// Serve static files from the 'public', 'styles', and 'src' directories
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/styles', express.static(path.join(__dirname, 'styles')));
+app.use('/src', express.static(path.join(__dirname, 'src')));
 
 // Define routes for specific HTML files if needed
 app.get('/', (req, res) => {
@@ -376,7 +384,12 @@ app.get('/login.html', (req, res) => {
 
 // Catch-all route to handle any other requests
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', req.path));
+    const filePath = path.join(__dirname, 'public', req.path);
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send('File not found');
+    }
 });
 
 

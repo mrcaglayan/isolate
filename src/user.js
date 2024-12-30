@@ -1,5 +1,7 @@
 import { schoolBasedOnYearAndSchoolName } from './takeschoolsbyYear.js';
 import { generateInstallments, gatherInstallmentData } from './installments.js';
+import { rawInstallments } from './installments.js'; // Adjust the path as necessary
+
 const urlParams = new URLSearchParams(window.location.search);
 const selectedSchool = urlParams.get('school');
 const username = urlParams.get('username');

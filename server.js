@@ -20,8 +20,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/styles', express.static(path.join(__dirname, 'styles')));
 app.use('/src', express.static(path.join(__dirname, 'src')));
 
-const dataFilePath = path.join(process.cwd(), 'data.json');
-let data = {
+const dataFilePath = path.join(__dirname, 'data.json');let data = {
     users: [],
     tables: {},
     schools: [],
@@ -50,21 +49,26 @@ function saveData() {
 loadData();
 
 app.get('/api/completeentrydb', (req, res) => {
-    const studenttezkereNo = req.query.studenttezkereNo;
-    const schoolName = req.query.schoolName;
+    try {
+        const studenttezkereNo = req.query.studenttezkereNo;
+        const schoolName = req.query.schoolName;
 
-    let filteredStudents = data.completeentrydb;
+        let filteredStudents = data.completeentrydb;
 
-    if (studenttezkereNo) {
-        filteredStudents = filteredStudents.filter(student => student["Student Tezkere No"] === studenttezkereNo);
+        if (studenttezkereNo) {
+            filteredStudents = filteredStudents.filter(student => student["Student Tezkere No"] === studenttezkereNo);
+        }
+
+        if (schoolName) {
+            filteredStudents = filteredStudents.filter(student => student.name === schoolName);
+        }
+
+        console.log('Filtered students:', filteredStudents); // Debugging log
+        res.json(filteredStudents);
+    } catch (error) {
+        console.error('Error in /api/completeentrydb:', error);
+        res.status(500).send('Internal Server Error');
     }
-
-    if (schoolName) {
-        filteredStudents = filteredStudents.filter(student => student.name === schoolName);
-    }
-
-    console.log('Filtered students:', filteredStudents); // Debugging log
-    res.json(filteredStudents);
 });
 
 app.get('/api/completeentrydb-ID', (req, res) => {
@@ -186,10 +190,15 @@ app.post('/api/students', (req, res) => {
 });
 
 app.get('/api/students', (req, res) => {
-    const username = req.query.username;
-    const selectedYear = req.query.year; // Ensure the parameter name matches the query parameter
-    const filteredStudents = data.students.filter(student => student.username === username && student.selectedYear === selectedYear);
-    res.json(filteredStudents);
+    try {
+        const username = req.query.username;
+        const selectedYear = req.query.year; // Ensure the parameter name matches the query parameter
+        const filteredStudents = data.students.filter(student => student.username === username && student.selectedYear === selectedYear);
+        res.json(filteredStudents);
+    } catch (error) {
+        console.error('Error in /api/students:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 app.put('/api/students/:id', (req, res) => {
@@ -399,6 +408,7 @@ app.get('/data.json', (req, res) => {
     if (fs.existsSync(dataFilePath)) {
         res.sendFile(dataFilePath);
     } else {
+        console.error('data.json file not found');
         res.status(404).send('data.json file not found');
     }
 });

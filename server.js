@@ -36,6 +36,8 @@ function loadData() {
     if (fs.existsSync(dataFilePath)) {
         const fileData = fs.readFileSync(dataFilePath);
         data = JSON.parse(fileData);
+    } else {
+        console.error('data.json file does not exist');
     }
 }
 

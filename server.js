@@ -177,24 +177,20 @@ app.delete('/api/schools/:index', (req, res) => {
 
 app.post('/api/students', (req, res) => {
     const student = req.body;
-    data.students.push(student);
+    data.students.push(student); // Add student to data.json
     saveData();
     res.status(201).json(student);
 });
 
 app.get('/api/students', (req, res) => {
-    try {
-        const { username, year: selectedYear } = req.query;
-        const filteredStudents = data.students.filter(student => student.username === username && student.selectedYear === selectedYear);
-        res.json(filteredStudents);
-    } catch (error) {
-        console.error('Error in /api/students:', error);
-        res.status(500).send('Internal Server Error');
-    }
+    const username = req.query.username;
+    const selectedYear = req.query.year; // Ensure the parameter name matches the query parameter
+    const filteredStudents = data.students.filter(student => student.username === username && student.selectedYear === selectedYear);
+    res.json(filteredStudents);
 });
 
 app.put('/api/students/:id', (req, res) => {
-    const studentId = parseInt(req.params.id, 10);
+    const studentId = parseInt(req.params.id, 10); // Convert studentId to a number
     const studentIndex = data.students.findIndex(student => student.id === studentId);
     if (studentIndex !== -1) {
         data.students[studentIndex] = { ...data.students[studentIndex], ...req.body };
@@ -206,10 +202,11 @@ app.put('/api/students/:id', (req, res) => {
 });
 
 app.delete('/api/students/:id', (req, res) => {
-    const studentId = parseInt(req.params.id, 10);
+    const studentId = parseInt(req.params.id, 10); // Convert studentId to a number
     const studentIndex = data.students.findIndex(student => student.id === studentId);
     if (studentIndex !== -1) {
         const student = data.students.splice(studentIndex, 1)[0];
+        // Remove the corresponding entry from completeentrydb
         data.completeentrydb = data.completeentrydb.filter(entry => entry.studentId !== studentId);
         saveData();
         res.json(student);

@@ -392,6 +392,12 @@ app.get('*', (req, res) => {
     }
 });
 
+// Serve the data.json file
+app.get('/data.json', (req, res) => {
+    res.sendFile(dataFilePath);
+});
+
+
 
 // Serve the favicon.ico file
 // app.get('/favicon.ico', (req, res) => {
